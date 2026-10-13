@@ -1,0 +1,41 @@
+//@version=5
+indicator("SMC & Key Levels Engine [Sinhala Trade]", overlay=true, max_boxes_count=500, max_lines_count=500)
+
+// --- 1. SUPPORT & RESISTANCE (PIVOTS) ---
+leftLen = input.int(15, "Pivot Left Length", group="S/R Levels")
+rightLen = input.int(15, "Pivot Right Length", group="S/R Levels")
+
+ph = ta.pivothigh(leftLen, rightLen)
+pl = ta.pivotlow(leftLen, rightLen)
+
+var line srLine = na
+if not na(ph)
+    srLine := line.new(bar_index - rightLen, ph, bar_index, ph, color=color.red, width=2)
+if not na(pl)
+    srLine := line.new(bar_index - rightLen, pl, bar_index, pl, color=color.green, width=2)
+
+// --- 2. FAIR VALUE GAPS (FVG) ---
+showFVG = input.bool(true, "Show Fair Value Gaps (FVG)", group="Smart Money Concepts")
+fvgBull = low > high[2]
+fvgBear = high < low[2]
+
+if showFVG and fvgBull
+    box.new(left=bar_index-2, top=low, right=bar_index, bottom=high[2], border_color=color.green, bgcolor=color.new(color.green, 85))
+
+if showFVG and fvgBear
+    box.new(left=bar_index-2, top=low[2], right=bar_index, bottom=high, border_color=color.red, bgcolor=color.new(color.red, 85))
+
+// --- 3. MARKET STRUCTURE SHIFT (MSS) ---
+var float lastHigh = na
+var float lastLow = na
+
+if not na(ph)
+    lastHigh := ph
+if not na(pl)
+    lastLow := pl
+
+mssBull = ta.crossover(close, lastHigh)
+mssBear = ta.crossunder(close, lastLow)
+
+plotshape(mssBull, title="MSS Bullish", style=shape.labelup, location=location.belowbar, color=color.blue, text="MSS", textcolor=color.white, size=size.tiny)
+plotshape(mssBear, title="MSS Bearish", style=shape.labeldown, location=location.abovebar, color=color.orange, text="MSS", textcolor=color.white, size=size.tiny)
